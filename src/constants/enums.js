@@ -1,0 +1,19 @@
+export const PROJECT_STATUS = {
+  ON_TRACK: 'ON_TRACK',
+  BEHIND_SCHEDULE: 'BEHIND_SCHEDULE',
+  COMPLETED: 'COMPLETED',
+};
+
+export const TASK_STATUS = {
+  TODO: 'TODO',
+  IN_PROGRESS: 'IN_PROGRESS',
+  IN_REVIEW: 'IN_REVIEW',
+  DONE: 'DONE',
+};
+
+export const TASK_PRIORITY = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+};

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "u1",
+    "name": "Alice Johnson",
+    "username": "alice",
+    "email": "alice@gradify.io",
+    "phone": "01012345678",
+    "password": "Gradify@123",
+    "role": "TeamLeader",
+    "isVerified": true,
+    "avatar": null,
+    "createdAt": "2026-08-01T10:00:00Z"
+  },
+  {
+    "id": "u2",
+    "name": "Bob Smith",
+    "username": "bob",
+    "email": "bob@gradify.io",
+    "phone": "01112345678",
+    "password": "Gradify@123",
+    "role": "TeamMember",
+    "isVerified": true,
+    "avatar": null,
+    "createdAt": "2026-08-05T09:30:00Z"
+  },
+  {
+    "id": "u3",
+    "name": "Carol Williams",
+    "username": "carol",
+    "email": "carol@gradify.io",
+    "phone": "01212345678",
+    "password": "Gradify@123",
+    "role": "Supervisor",
+    "isVerified": true,
+    "avatar": null,
+    "createdAt": "2026-07-15T08:00:00Z"
+  },
+  {
+    "id": "u4",
+    "name": "Dave Brown",
+    "username": "dave",
+    "email": "dave@gradify.io",
+    "phone": "01512345678",
+    "password": "Gradify@123",
+    "role": "TeamMember",
+    "isVerified": true,
+    "avatar": null,
+    "createdAt": "2026-08-10T14:00:00Z"
+  },
+  {
+    "id": "u5",
+    "name": "Eve Davis",
+    "username": "eve",
+    "email": "eve@gradify.io",
+    "phone": "01098765432",
+    "password": "Gradify@123",
+    "role": "TeamMember",
+    "isVerified": false,
+    "avatar": null,
+    "createdAt": "2026-09-20T12:00:00Z"
+  }
+]

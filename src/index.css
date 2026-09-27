@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+@config '../tailwind.config.js';
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}

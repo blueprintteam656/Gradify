@@ -1,0 +1,37 @@
+{
+  "universities": [
+    {
+      "id": "eelu",
+      "name": "Egyptian E-Learning University (EELU)",
+      "faculties": [
+        {
+          "id": "cit",
+          "name": "Computers and Information Technology",
+          "departments": [
+            { "id": "cs", "name": "Computer Science" },
+            { "id": "se", "name": "Software Engineering" },
+            { "id": "is", "name": "Information Systems" },
+            { "id": "it", "name": "Information Technology" }
+          ]
+        },
+        {
+          "id": "ba",
+          "name": "Business Administration",
+          "departments": [
+            { "id": "acc", "name": "Accounting" },
+            { "id": "mkt", "name": "Marketing" },
+            { "id": "mis", "name": "Management Information Systems" }
+          ]
+        },
+        {
+          "id": "eng",
+          "name": "Engineering",
+          "departments": [
+            { "id": "ce", "name": "Computer Engineering" },
+            { "id": "ee", "name": "Electronics & Communications" }
+          ]
+        }
+      ]
+    }
+  ]
+}

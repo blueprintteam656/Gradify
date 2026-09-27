@@ -1,0 +1,32 @@
+[
+  {
+    "id": "p1",
+    "name": "Gradify Platform",
+    "description": "AI-powered graduation project management system",
+    "status": "ON_TRACK",
+    "ownerId": "u1",
+    "members": ["u1", "u2", "u4"],
+    "createdAt": "2026-08-15T10:00:00Z",
+    "deadline": "2027-01-15T23:59:59Z"
+  },
+  {
+    "id": "p2",
+    "name": "Smart Library",
+    "description": "An intelligent library management and recommendation system",
+    "status": "BEHIND_SCHEDULE",
+    "ownerId": "u2",
+    "members": ["u2", "u4"],
+    "createdAt": "2026-08-20T11:00:00Z",
+    "deadline": "2026-12-01T23:59:59Z"
+  },
+  {
+    "id": "p3",
+    "name": "HealthTrack",
+    "description": "Personal health monitoring dashboard",
+    "status": "COMPLETED",
+    "ownerId": "u1",
+    "members": ["u1"],
+    "createdAt": "2026-06-01T09:00:00Z",
+    "deadline": "2026-09-01T23:59:59Z"
+  }
+]

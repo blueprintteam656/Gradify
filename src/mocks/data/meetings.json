@@ -1,0 +1,32 @@
+[
+  {
+    "id": "m1",
+    "projectId": "p1",
+    "title": "Sprint Planning — Week 5",
+    "scheduledAt": "2026-09-28T10:00:00Z",
+    "duration": 60,
+    "attendees": ["u1", "u2", "u4"],
+    "status": "SCHEDULED",
+    "notes": null
+  },
+  {
+    "id": "m2",
+    "projectId": "p1",
+    "title": "Architecture Review",
+    "scheduledAt": "2026-09-25T14:00:00Z",
+    "duration": 45,
+    "attendees": ["u1", "u2"],
+    "status": "COMPLETED",
+    "notes": "Agreed on microservice approach for backend"
+  },
+  {
+    "id": "m3",
+    "projectId": "p2",
+    "title": "Supervisor Check-in",
+    "scheduledAt": "2026-09-30T09:00:00Z",
+    "duration": 30,
+    "attendees": ["u2", "u3"],
+    "status": "SCHEDULED",
+    "notes": null
+  }
+]

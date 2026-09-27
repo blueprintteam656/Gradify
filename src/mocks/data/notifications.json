@@ -1,0 +1,38 @@
+[
+  {
+    "id": "n1",
+    "userId": "u1",
+    "type": "TASK_ASSIGNED",
+    "message": "You have been assigned 'Create API documentation'",
+    "read": false,
+    "createdAt": "2026-09-27T08:00:00Z",
+    "link": "/tasks/t5"
+  },
+  {
+    "id": "n2",
+    "userId": "u2",
+    "type": "MEETING_REMINDER",
+    "message": "Sprint Planning — Week 5 starts in 1 hour",
+    "read": false,
+    "createdAt": "2026-09-28T09:00:00Z",
+    "link": "/collaboration/meetings"
+  },
+  {
+    "id": "n3",
+    "userId": "u1",
+    "type": "PROJECT_UPDATE",
+    "message": "Smart Library project status changed to BEHIND_SCHEDULE",
+    "read": true,
+    "createdAt": "2026-09-26T15:00:00Z",
+    "link": "/projects/p2"
+  },
+  {
+    "id": "n4",
+    "userId": "u4",
+    "type": "TASK_COMMENT",
+    "message": "Alice commented on 'Setup CI/CD pipeline'",
+    "read": false,
+    "createdAt": "2026-09-27T11:30:00Z",
+    "link": "/tasks/t3"
+  }
+]
