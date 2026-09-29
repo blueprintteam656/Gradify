@@ -17,6 +17,9 @@ const ResetPassword = lazy(() => import('../features/auth/pages/ResetPassword'))
 const EmailVerification = lazy(() => import('../features/auth/pages/EmailVerification'));
 const AccountCreated = lazy(() => import('../features/auth/pages/AccountCreated'));
 
+// ── Landing ────────────────────────────────────────────────
+const Landing = lazy(() => import('../features/landing/pages/Landing'));
+
 // ── Dashboard pages ─────────────────────────────────────────
 const Dashboard = lazy(() => import('../features/dashboard/pages/Dashboard'));
 const Notifications = lazy(() => import('../features/dashboard/pages/Notifications'));
@@ -95,8 +98,9 @@ export default function AppRouter() {
           <Route path="/auth/reset-password" element={<ResetPassword />} />
         </Route>
 
-        {/* Sign-up flow (centered layout, rendered by each page) */}
+        {/* Signed-out only: landing + sign-up flow (each page renders its own layout) */}
         <Route element={<GuestRoute />}>
+          <Route path="/" element={<Landing />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<EmailVerification />} />
         </Route>
@@ -113,9 +117,6 @@ export default function AppRouter() {
             </ProtectedRoute>
           }
         >
-          {/* Root redirect */}
-          <Route index element={<Navigate to="/dashboard" replace />} />
-
           {/* Dashboard */}
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="dashboard/notifications" element={<Notifications />} />
