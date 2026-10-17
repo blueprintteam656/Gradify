@@ -83,8 +83,20 @@ export function AuthProvider({ children }) {
     if (!Object.values(ROLES).includes(role)) return;
     setSession((prev) => (prev ? { ...prev, user: { ...prev.user, role } } : null));
   }, []);
+    // Saves the edited profile and refreshes currentUser everywhere in the app
+  const updateProfile = useCallback(
+    async (payload) => {
+      if (!session) throw new Error('You are not signed in.');
+      const { user } = await authService.updateProfile(session.user.id, payload);
+      const next = { ...session, user: { ...user, role: session.user.role } };
+      storeSession(next, Boolean(session.expiresAt));
+      setSession(next);
+      return user;
+    },
+    [session],
+  );
 
-  const value = { currentUser, login, signInAfterVerification, logout, switchRole };
+   const value = { currentUser, login, signInAfterVerification, logout, switchRole, updateProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
   Bell,
@@ -8,9 +8,8 @@ import {
   HelpCircle,
   KanbanSquare,
   LayoutDashboard,
-  MoreVertical,
+  LogOut,
   Search,
-  ShieldCheck,
   Sparkles,
   Sun,
   Users,
@@ -21,7 +20,7 @@ import { useAuth } from '../../../hooks/useAuth';
 const WORKSPACE_NAV = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Project & Team', to: '/projects', icon: Users, badge: 'Alpha' },
-  { label: 'Kanban Board', to: '/tasks/kanban', icon: KanbanSquare, count: 8 },
+  { label: 'Kanban Board', to: '/tasks/kanban', icon: KanbanSquare },
   { label: 'Deliverables', to: '/tasks', icon: CheckSquare, badge: 'Phase 2' },
   { label: 'AI Assistant', to: '/ai-workspace/chat', icon: Sparkles, dot: 'bg-indigo-300' },
 ];
@@ -31,6 +30,8 @@ const COMMUNICATION_NAV = [
   { label: 'Meetings & Schedule', to: '/collaboration/meetings', icon: CalendarDays },
   { label: 'Analytics & Audit', to: '/supervisor/analytics', icon: BarChart3 },
 ];
+
+const formatRole = (role) => (role ?? '').replace(/([a-z])([A-Z])/g, '$1 $2');
 
 function SidebarItem({ item, active }) {
   const Icon = item.icon;
@@ -51,26 +52,25 @@ function SidebarItem({ item, active }) {
           {item.badge}
         </span>
       )}
-      {item.count && (
-        <span className="rounded bg-indigo-400/40 px-1.5 text-[10px] font-bold text-white">{item.count}</span>
-      )}
       {item.dot && <span className={`size-1.5 rounded-full ${item.dot}`} />}
     </Link>
   );
 }
 
 function initialsOf(user) {
-  const full = (user?.name ?? `${user?.firstName ?? ''} ${user?.lastName ?? ''}`).trim();
-  const parts = full.split(/\s+/).filter(Boolean);
-  return `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`.toUpperCase() || 'SN';
+  const parts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);
+  return `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`.toUpperCase() || '?';
 }
 
 // `active` = label of the sidebar item to highlight (the design highlights "Dashboard")
 export default function ProfileShell({ active = 'Dashboard', children }) {
-  const { currentUser } = useAuth();
-  const displayName =
-    currentUser?.name ??
-    (`${currentUser?.firstName ?? ''} ${currentUser?.lastName ?? ''}`.trim() || 'Student Name');
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth/login', { replace: true });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex bg-[#f3f5f9] text-slate-800">
@@ -87,7 +87,7 @@ export default function ProfileShell({ active = 'Dashboard', children }) {
         <div className="mb-5 flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[10px] font-semibold tracking-wide text-slate-300">
           <span className="flex items-center gap-1.5">
             <GraduationCap size={12} />
-            STUDENT VIEW
+            {currentUser?.role === 'Supervisor' ? 'SUPERVISOR VIEW' : 'STUDENT VIEW'}
           </span>
           <span>2026/27</span>
         </div>
@@ -107,26 +107,28 @@ export default function ProfileShell({ active = 'Dashboard', children }) {
         </nav>
 
         <div className="mt-auto flex flex-col gap-2 pt-6">
-          <div className="flex items-center gap-2.5 rounded-lg bg-white/5 p-2.5 text-white">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
-              <ShieldCheck size={14} />
-            </span>
-            <div className="min-w-0 text-xs">
-              <p className="truncate font-semibold">{currentUser?.supervisorName ?? 'Supervisor Name'}</p>
-              <p className="truncate text-slate-400">Academic Advisor • Assigned</p>
-            </div>
-          </div>
-
           <Link to="/profile" className="flex items-center gap-2.5 rounded-lg bg-white/10 p-2.5 text-white">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-slate-800">
-              {initialsOf(currentUser)}
+            <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-200 text-xs font-bold text-slate-800">
+              {currentUser?.avatar ? (
+                <img src={currentUser.avatar} alt="" className="size-full object-cover" />
+              ) : (
+                initialsOf(currentUser)
+              )}
             </span>
             <div className="min-w-0 flex-1 text-xs">
-              <p className="truncate font-semibold">{displayName}</p>
-              <p className="truncate text-slate-400">{currentUser?.teamRole ?? 'Team Leader'}</p>
+              <p className="truncate font-semibold">{currentUser?.name ?? 'Guest'}</p>
+              <p className="truncate text-slate-400">{formatRole(currentUser?.role)}</p>
             </div>
-            <MoreVertical size={14} className="text-slate-400" />
           </Link>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <LogOut size={15} />
+            Logout
+          </button>
         </div>
       </aside>
 

@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, ArrowRight } from 'lucide-react';
 
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import { forgotPassword } from '../../../services/mock/mockAuthService';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -12,6 +12,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [devResetPath, setDevResetPath] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -21,6 +22,7 @@ export default function ForgotPassword() {
 
     setError('');
     setSuccess('');
+    setDevResetPath('');
 
     if (!normalizedEmail) {
       setError('University email is required.');
@@ -35,13 +37,11 @@ export default function ForgotPassword() {
     setIsSubmitting(true);
 
     try {
-      // Frontend validation only.
-      // Backend integration will be added when the API is available.
-      setSuccess(
-        'The form is valid. Password reset email sending is not connected yet.'
-      );
-    } catch {
-      setError('Something went wrong. Please try again.');
+      const result = await forgotPassword(normalizedEmail);
+      setSuccess(result.message);
+      if (import.meta.env.DEV) setDevResetPath(result.devResetPath);
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -62,31 +62,31 @@ export default function ForgotPassword() {
           <Mail size={26} />
         </div>
 
-        <h1 className="text-2xl font-bold text-primary">
-          Forgot Password?
-        </h1>
+        <h1 className="text-2xl font-bold text-primary">Forgot Password?</h1>
 
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          Enter your registered university email address and we’ll help you
-          reset your password.
+          Enter your registered university email address and we’ll help you reset your password.
         </p>
       </div>
 
       {error && (
-        <div
-          role="alert"
-          className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
+        <div role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {success && (
-        <div
-          role="status"
-          className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800"
-        >
+        <div role="status" className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
           {success}
+        </div>
+      )}
+
+      {devResetPath && (
+        <div className="mb-4 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          Dev only (no email server yet):{' '}
+          <Link to={devResetPath} className="font-semibold underline">
+            Open the reset link
+          </Link>
         </div>
       )}
 
@@ -100,6 +100,7 @@ export default function ForgotPassword() {
             setEmail(e.target.value);
             setError('');
             setSuccess('');
+            setDevResetPath('');
           }}
           placeholder="student@university.edu"
           autoComplete="email"
@@ -117,10 +118,7 @@ export default function ForgotPassword() {
           {isSubmitting ? 'Sending...' : 'Send Reset Link'}
         </Button>
 
-        <Link
-          to="/auth/login"
-          className="text-center text-sm font-medium text-link-navy hover:underline"
-        >
+        <Link to="/auth/login" className="text-center text-sm font-medium text-link-navy hover:underline">
           Cancel
         </Link>
       </form>

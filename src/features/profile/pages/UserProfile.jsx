@@ -1,119 +1,84 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   BarChart3,
   Building2,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
   ExternalLink,
-  Flag,
   GraduationCap,
   Landmark,
   Link2,
   Lock,
   Mail,
   Pencil,
-  Plus,
   ShieldCheck,
   Smartphone,
   Sparkles,
-  TrendingUp,
   UserRound,
   Users,
 } from 'lucide-react';
 
 import { useAuth } from '../../../hooks/useAuth';
+import { getProjects } from '../../../services/mock/mockProjectsService';
+import { getTasks } from '../../../services/mock/mockTasksService';
 import ProfileShell from '../components/ProfileShell';
 
-/* ------------------------------------------------------------------ */
-/* DEMO DATA: used only for fields that currentUser does not have yet. */
-/* Delete this block once the backend sends the real data.             */
-/* ------------------------------------------------------------------ */
-const DEMO = {
-  email: 'nouran.mohamed@eelu.edu.eg',
-  faculty: 'Faculty of Computers & Information, EELU',
-  university: 'Egyptian E-Learning University (EELU)',
-  department: 'Computer Science',
-  phoneNumber: '+20 102 345 6789',
-  studentId: '20221234',
-  graduationYear: 2027,
-  username: 'nouran_lead27',
-  teamRole: 'Team Leader',
-  supervisedBy: 'Supervised under Academic Committee • Project Group GP-2027-04',
-  enrollmentStatus: 'Enrolled • Active',
-  skills: [
-    'React.js',
-    'TypeScript',
-    'ASP.NET Core 8.0',
-    'Tailwind CSS',
-    'UI/UX Architecture',
-    'SQL Server & EF Core',
-    'Git & GitHub CI/CD',
-    'RESTful APIs',
-    'Agile Scrum Methodology',
-    'AI Prompt Engineering',
-  ],
-  skillCompetency: {
-    level: 'High (Level 4)',
-    note: 'Skills were cross-verified via Sprint #1 and #2 code review audits submitted to Dr. Aris Thorne.',
-  },
-  projects: [
-    {
-      id: 1,
-      code: 'GP-2027-CORE',
-      name: 'Gradify Core Platform',
-      description: 'AI-Powered Graduation Project...',
-      status: 'In Progress',
-      progress: 68,
-      sprint: 'Sprint 3: Deliverable Architecture & DB Schema',
-      role: 'Team Leader • Frontend Lead',
-      members: 4,
-      totalMembers: 6,
-      supervisorName: 'Dr. Aris Thorne',
-    },
-    {
-      id: 2,
-      name: 'Mobile Learning System (Course Project)',
-      description: 'Archived project repository • Grade awarded: A (95%)',
-      status: 'Completed',
-      year: 2026,
-    },
-  ],
-  academicStanding: {
-    rank: 'Top 5%',
-    gpa: '3.88',
-    gpaNote: 'Excellent with Honors',
-    tasksDone: 22,
-    tasksTotal: 28,
-    velocity: '94%',
-    velocityNote: '+8% vs team avg',
-    advisorRating: '4.9',
-    advisorName: 'Dr. Aris Thorne',
-    weeklyActivity: [4, 5, 4, 6, 5, 7, 6, 8],
-  },
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DOT_COLORS = ['bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-slate-700', 'bg-amber-500'];
+
+const PROJECT_STATUS = {
+  ON_TRACK: { label: 'On Track', className: 'bg-emerald-100 text-emerald-700' },
+  BEHIND_SCHEDULE: { label: 'Behind Schedule', className: 'bg-amber-100 text-amber-700' },
+  COMPLETED: { label: 'Completed', className: 'bg-slate-200 text-slate-700' },
 };
 
-const DOT_COLORS = ['bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-slate-700', 'bg-amber-500'];
-const USE_DEMO_DATA = false; // خليها true لو عايز تشوف الشكل زي التصميم
+const formatRole = (role) => (role ?? '').replace(/([a-z])([A-Z])/g, '$1 $2');
+const formatDate = (iso) =>
+  iso ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(iso)) : '—';
 
-const withDemo = (user) =>
-  USE_DEMO_DATA
-    ? Object.assign(
-        {},
-        DEMO,
-        Object.fromEntries(Object.entries(user ?? {}).filter(([, v]) => v != null && v !== ''))
-      )
-    : user ?? {};
-
-function splitName(user) {
+function getNames(user) {
   if (user?.firstName) return [user.firstName, user.lastName ?? ''];
-  const [first = '', ...rest] = (user?.name ?? user?.fullName ?? '').trim().split(/\s+/);
-  return first ? [first, rest.join(' ')] : ['Nouran', 'Mohamed'];
+  const [first = '', ...rest] = (user?.name ?? '').trim().split(/\s+/);
+  return [first, rest.join(' ')];
 }
 
-/* ------------------------------------------------------------------ */
-/* small components                                                    */
-/* ------------------------------------------------------------------ */
+/** Everything on the "Performance Overview" card is computed from the user's assigned tasks. */
+function computeStats(tasks, userId) {
+  const now = Date.now();
+  const mine = tasks.filter((t) => t.assigneeId === userId);
+  const done = mine.filter((t) => t.status === 'DONE');
+  const active = mine.filter((t) => t.status === 'IN_PROGRESS' || t.status === 'IN_REVIEW');
+  const overdue = mine.filter(
+    (t) => t.status !== 'DONE' && t.dueDate && new Date(t.dueDate).getTime() < now,
+  );
+
+  // Completed tasks per week for the last 8 weeks (completedAt if it exists, otherwise the due date)
+  const weekly = Array(8).fill(0);
+  done.forEach((t) => {
+    const date = new Date(t.completedAt ?? t.dueDate ?? t.createdAt).getTime();
+    const weeksAgo = Math.max(0, Math.floor((now - date) / WEEK_MS));
+    if (weeksAgo < 8) weekly[7 - weeksAgo] += 1;
+  });
+
+  return {
+    total: mine.length,
+    done: done.length,
+    active: active.length,
+    overdue: overdue.length,
+    rate: mine.length ? Math.round((done.length / mine.length) * 100) : 0,
+    weekly,
+  };
+}
+
+function projectProgress(project, tasks) {
+  if (project.status === 'COMPLETED') return 100;
+  const list = tasks.filter((t) => t.projectId === project.id);
+  if (!list.length) return 0;
+  return Math.round((list.filter((t) => t.status === 'DONE').length / list.length) * 100);
+}
 
 function ReadOnlyField({ label, value, icon, mono, iconClass = 'text-slate-400' }) {
   return (
@@ -127,26 +92,24 @@ function ReadOnlyField({ label, value, icon, mono, iconClass = 'text-slate-400' 
   );
 }
 
-function Stat({ label, value, note, noteClass = 'text-slate-500', valueClass = 'text-slate-900' }) {
+function Stat({ label, value, note, valueClass = 'text-slate-900', noteClass = 'text-slate-500' }) {
   return (
     <div className="rounded-xl bg-[#f3f1ee] p-3.5">
       <p className="text-[11px] font-medium text-slate-500">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${valueClass}`}>{value ?? '—'}</p>
+      <p className={`mt-1 text-xl font-bold ${valueClass}`}>{value}</p>
       {note && <p className={`mt-0.5 text-[11px] ${noteClass}`}>{note}</p>}
     </div>
   );
 }
 
 function Sparkline({ values }) {
-  if (!values?.length) {
-    return <p className="mt-2 text-xs text-slate-400">No activity recorded yet.</p>;
+  if (!values.some((v) => v > 0)) {
+    return <p className="mt-2 rounded-lg bg-[#f3f1ee] p-3 text-xs text-slate-500">No completed tasks in the last 8 weeks.</p>;
   }
 
   const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  const step = values.length > 1 ? 100 / (values.length - 1) : 100;
-  const coords = values.map((v, i) => `${i * step},${26 - ((v - min) / range) * 20}`);
+  const step = 100 / (values.length - 1);
+  const coords = values.map((v, i) => `${i * step},${27 - (v / max) * 22}`);
 
   return (
     <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="mt-2 h-14 w-full rounded-lg bg-[#f3f1ee]">
@@ -162,25 +125,51 @@ function Sparkline({ values }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* page                                                                */
-/* ------------------------------------------------------------------ */
-
 export default function UserProfile() {
   const { currentUser } = useAuth();
-  const user = withDemo(currentUser);
 
-  const [firstName, lastName] = splitName(currentUser);
+  const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+
+    Promise.all([getProjects(), getTasks()])
+      .then(([projectList, taskList]) => {
+        if (!alive) return;
+        setProjects(projectList);
+        setTasks(taskList);
+      })
+      .catch((error) => alive && setLoadError(error.message || 'Failed to load projects and tasks.'))
+      .finally(() => alive && setLoading(false));
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const userId = currentUser?.id;
+  const stats = useMemo(() => computeStats(tasks, userId), [tasks, userId]);
+  const myProjects = useMemo(
+    () => projects.filter((p) => p.ownerId === userId || p.members?.includes(userId)),
+    [projects, userId],
+  );
+
+  if (!currentUser) {
+    return <p className="p-6 text-sm text-slate-600">Failed to load profile. User not found.</p>;
+  }
+
+  const academic = currentUser.academic ?? {};
+  const [firstName, lastName] = getNames(currentUser);
   const fullName = `${firstName} ${lastName}`.trim();
   const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase();
-  const picture = user.profilePictureUrl ?? user.profilePicture ?? '';
-  const skills = (user.skills ?? []).map((s) => (typeof s === 'string' ? s : s.name));
-  const projects = user.projects ?? [];
-  const isCompleted = (p) => String(p.status ?? '').toLowerCase() === 'completed';
-  const activeProjects = projects.filter((p) => !isCompleted(p));
-  const completedProjects = projects.filter(isCompleted);
+  const skills = currentUser.skills ?? [];
+  const activeProjects = myProjects.filter((p) => p.status !== 'COMPLETED');
+  const completedProjects = myProjects.filter((p) => p.status === 'COMPLETED');
   const featured = activeProjects[0];
-  const standing = user.academicStanding ?? {};
+  const otherProjects = [...activeProjects.slice(1), ...completedProjects];
 
   const cardClass = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm';
 
@@ -195,9 +184,11 @@ export default function UserProfile() {
             </p>
             <div className="mt-1 flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#0f1d4a]">My Profile</h1>
-              <span className="rounded-md bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                ID: {user.studentId}
-              </span>
+              {academic.academicId && (
+                <span className="rounded-md bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                  ID: {academic.academicId}
+                </span>
+              )}
             </div>
             <p className="mt-1 text-sm text-slate-500">
               Manage your personal information, verified competencies, and active graduation milestones.
@@ -205,10 +196,10 @@ export default function UserProfile() {
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm">
-            <p className="text-slate-500">System Status</p>
+            <p className="text-slate-500">Account Status</p>
             <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-slate-900">
-              <span className="size-2 rounded-full bg-emerald-500" />
-              {user.enrollmentStatus}
+              <span className={`size-2 rounded-full ${currentUser.isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              {currentUser.isVerified ? 'Verified • Active' : 'Pending Verification'}
             </p>
           </div>
         </div>
@@ -220,44 +211,46 @@ export default function UserProfile() {
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               <div className="flex size-24 items-center justify-center overflow-hidden rounded-full border-4 border-indigo-200 bg-white text-3xl font-bold text-[#1b2559]">
-                {picture ? (
-                  <img src={picture} alt={fullName} className="size-full object-cover" />
+                {currentUser.avatar ? (
+                  <img src={currentUser.avatar} alt={fullName} className="size-full object-cover" />
                 ) : initials ? (
                   initials
                 ) : (
                   <UserRound size={40} />
                 )}
               </div>
-              <span className="absolute bottom-0 right-0 flex size-6 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white">
-                <CheckCircle2 size={12} />
-              </span>
+              {currentUser.isVerified && (
+                <span className="absolute bottom-0 right-0 flex size-6 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white">
+                  <CheckCircle2 size={12} />
+                </span>
+              )}
             </div>
 
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-900">{fullName}</h2>
+                <h2 className="text-xl font-bold text-slate-900">{fullName || '—'}</h2>
                 <span className="inline-flex items-center gap-1 rounded-md bg-[#2a1458] px-2 py-0.5 text-[11px] font-semibold text-white">
                   <Users size={11} />
-                  {user.teamRole}
+                  {formatRole(currentUser.role)}
                 </span>
-                <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
-                  Senior Class {user.graduationYear}
-                </span>
+                {academic.graduationYear && (
+                  <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+                    Senior Class {academic.graduationYear}
+                  </span>
+                )}
               </div>
 
               <div className="mt-2 flex flex-col gap-1 text-sm text-slate-600">
                 <span className="flex items-center gap-1.5">
                   <Mail size={14} className="text-slate-400" />
-                  {user.email}
+                  {currentUser.email}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Landmark size={14} className="text-slate-400" />
-                  {user.faculty}
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <ShieldCheck size={13} className="text-emerald-500" />
-                  {user.supervisedBy}
-                </span>
+                {academic.faculty && (
+                  <span className="flex items-center gap-1.5">
+                    <Landmark size={14} className="text-slate-400" />
+                    {academic.faculty}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -301,39 +294,39 @@ export default function UserProfile() {
 
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <ReadOnlyField label="Full legal name" value={fullName} icon={<Lock size={12} />} />
-                <ReadOnlyField label="University email" value={user.email} icon={<Lock size={12} />} />
+                <ReadOnlyField label="University email" value={currentUser.email} icon={<Lock size={12} />} />
                 <ReadOnlyField
                   label="Portal username"
-                  value={`@${user.username}`}
+                  value={currentUser.username ? `@${currentUser.username}` : ''}
                   icon={<Lock size={12} />}
                   mono
                 />
                 <ReadOnlyField
                   label="Phone contact"
-                  value={user.phoneNumber}
+                  value={currentUser.phone}
                   icon={<Smartphone size={13} />}
                   iconClass="text-emerald-500"
                 />
                 <ReadOnlyField
                   label="Academic student ID"
-                  value={user.studentId}
+                  value={academic.academicId}
                   icon={<CheckCircle2 size={13} />}
                   mono
                 />
                 <ReadOnlyField
                   label="Graduation class"
-                  value={`Class of ${user.graduationYear}`}
+                  value={academic.graduationYear ? `Class of ${academic.graduationYear}` : ''}
                   icon={<GraduationCap size={14} />}
                   iconClass="text-indigo-500"
                 />
                 <div className="sm:col-span-2">
                   <ReadOnlyField
                     label="University affiliation"
-                    value={user.university}
+                    value={academic.university}
                     icon={<Building2 size={13} />}
                   />
                 </div>
-                <ReadOnlyField label="Department" value={user.department} icon={<Building2 size={13} />} />
+                <ReadOnlyField label="Department" value={academic.department} icon={<Building2 size={13} />} />
               </div>
             </section>
 
@@ -344,61 +337,34 @@ export default function UserProfile() {
                   <div>
                     <h2 className="text-sm font-bold text-slate-900">Technical Skills &amp; Competencies</h2>
                     <p className="max-w-xs text-xs text-slate-500">
-                      Skills verified by supervisors and tracked across team deliverables.
+                      Skills shown to your supervisor and teammates.
                     </p>
                   </div>
                 </div>
-                {/* TODO: connect to a "propose skill" flow */}
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-[#f3f1ee] px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-70"
+                <Link
+                  to="/profile/edit"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-[#f3f1ee] px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-[#e9e6e1]"
                 >
-                  <span className="flex size-4 items-center justify-center rounded-full border border-slate-500">
-                    <Plus size={10} />
-                  </span>
-                  Propose New Skill
-                </button>
+                  <Pencil size={12} />
+                  Manage Skills
+                </Link>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {skills.length ? (
-                  skills.map((skill, index) => {
-                    const isAI = /^ai\b/i.test(skill);
-                    return (
-                      <span
-                        key={skill}
-                        className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${
-                          isAI
-                            ? 'border-violet-200 bg-violet-50 text-violet-800'
-                            : 'border-slate-200 bg-[#f3f1ee] text-slate-700'
-                        }`}
-                      >
-                        {isAI ? (
-                          <Sparkles size={11} className="text-violet-600" />
-                        ) : (
-                          <span className={`size-1.5 rounded-full ${DOT_COLORS[index % DOT_COLORS.length]}`} />
-                        )}
-                        {skill}
-                      </span>
-                    );
-                  })
+                  skills.map((skill, index) => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-[#f3f1ee] px-2.5 py-1 text-xs font-medium text-slate-700"
+                    >
+                      <span className={`size-1.5 rounded-full ${DOT_COLORS[index % DOT_COLORS.length]}`} />
+                      {skill}
+                    </span>
+                  ))
                 ) : (
-                  <p className="text-sm text-slate-500">No skills added yet.</p>
+                  <p className="text-sm text-slate-500">No skills added yet. Use “Manage Skills” to add some.</p>
                 )}
               </div>
-
-              {user.skillCompetency && (
-                <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#f3f1ee] p-3.5">
-                  <ShieldCheck size={16} className="mt-0.5 shrink-0 text-[#1b2559]" />
-                  <div className="text-xs">
-                    <p className="font-semibold text-slate-900">
-                      Skill Competency Index: {user.skillCompetency.level}
-                    </p>
-                    <p className="mt-0.5 text-slate-600">{user.skillCompetency.note}</p>
-                  </div>
-                </div>
-              )}
             </section>
           </div>
 
@@ -421,67 +387,62 @@ export default function UserProfile() {
                 </Link>
               </div>
 
-              {featured ? (
+              {loading && <p className="mt-4 text-sm text-slate-500">Loading projects...</p>}
+              {loadError && <p className="mt-4 text-sm text-red-600">{loadError}</p>}
+              {!loading && !loadError && !myProjects.length && (
+                <p className="mt-4 text-sm text-slate-500">No projects assigned yet.</p>
+              )}
+
+              {featured && (
                 <div className="mt-4 rounded-xl bg-[#f3f1ee] p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      {featured.code && (
-                        <p className="font-mono text-[10px] font-semibold text-indigo-600">{featured.code}</p>
-                      )}
-                      <p className="text-sm font-bold text-slate-900">{featured.name ?? featured.title}</p>
-                      {featured.description && (
-                        <p className="text-xs text-slate-500">{featured.description}</p>
-                      )}
+                      <p className="font-mono text-[10px] font-semibold uppercase text-indigo-600">
+                        {featured.id}
+                      </p>
+                      <p className="text-sm font-bold text-slate-900">{featured.name}</p>
+                      {featured.description && <p className="text-xs text-slate-500">{featured.description}</p>}
                     </div>
-                    <span className="shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                      {featured.status ?? 'In Progress'}
+                    <span
+                      className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                        PROJECT_STATUS[featured.status]?.className ?? 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {PROJECT_STATUS[featured.status]?.label ?? featured.status}
                     </span>
                   </div>
 
-                  {typeof featured.progress === 'number' && (
-                    <div className="mt-3">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-600">Milestone Progress</span>
-                        <span className="font-bold text-slate-900">{featured.progress}%</span>
-                      </div>
-                      <div className="mt-1 h-2 rounded-full bg-slate-200">
-                        <div
-                          className="h-2 rounded-full bg-gradient-to-r from-[#1b2559] to-indigo-500"
-                          style={{ width: `${Math.min(featured.progress, 100)}%` }}
-                        />
-                      </div>
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-600">Milestone Progress</span>
+                      <span className="font-bold text-slate-900">{projectProgress(featured, tasks)}%</span>
                     </div>
-                  )}
+                    <div className="mt-1 h-2 rounded-full bg-slate-200">
+                      <div
+                        className="h-2 rounded-full bg-gradient-to-r from-[#1b2559] to-indigo-500"
+                        style={{ width: `${projectProgress(featured, tasks)}%` }}
+                      />
+                    </div>
+                  </div>
 
                   <div className="mt-3 flex flex-col gap-1 text-xs text-slate-600">
-                    {featured.sprint && (
-                      <span className="flex items-center gap-1.5">
-                        <Flag size={12} className="text-indigo-500" />
-                        <b>{featured.sprint.split(':')[0]}:</b>
-                        {featured.sprint.split(':').slice(1).join(':')}
-                      </span>
-                    )}
-                    {featured.role && (
-                      <span className="flex items-center gap-1.5">
-                        <UserRound size={12} className="text-slate-400" />
-                        <b>Role:</b> {featured.role}
-                      </span>
-                    )}
-                    {featured.totalMembers && (
-                      <span className="flex items-center gap-1.5">
-                        <Users size={12} className="text-slate-400" />
-                        {featured.members ?? 0} / {featured.totalMembers} Team Members Assigned
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1.5">
+                      <UserRound size={12} className="text-slate-400" />
+                      <b>Role:</b> {featured.ownerId === userId ? 'Team Leader' : 'Team Member'}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Users size={12} className="text-slate-400" />
+                      {featured.members?.length ?? 0} Team Members Assigned
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <CalendarDays size={12} className="text-slate-400" />
+                      <b>Deadline:</b> {formatDate(featured.deadline)}
+                    </span>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-xs text-slate-600">
-                      <span className="size-2 rounded-full bg-amber-400" />
-                      {featured.supervisorName}
-                    </span>
+                  <div className="mt-3 flex justify-end">
                     <Link
-                      to={featured.id ? `/projects/${featured.id}` : '/projects'}
+                      to={`/projects/${featured.id}`}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f1d4a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1b2a66]"
                     >
                       Workspace
@@ -489,71 +450,58 @@ export default function UserProfile() {
                     </Link>
                   </div>
                 </div>
-              ) : (
-                <p className="mt-4 text-sm text-slate-500">No projects assigned yet.</p>
               )}
 
-              {completedProjects.map((project) => (
-                <div
-                  key={project.id ?? project.name}
-                  className="mt-3 rounded-xl border border-slate-200 p-3.5 text-xs"
+              {otherProjects.map((project) => (
+                <Link
+                  key={project.id}
+                  to={`/projects/${project.id}`}
+                  className="mt-3 block rounded-xl border border-slate-200 p-3.5 text-xs hover:bg-slate-50"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold text-slate-900">{project.name ?? project.title}</p>
-                    <span className="shrink-0 rounded bg-[#f3f1ee] px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                      Completed {project.year ?? ''}
+                    <p className="font-semibold text-slate-900">{project.name}</p>
+                    <span
+                      className={`shrink-0 rounded px-2 py-0.5 text-[10px] font-semibold ${
+                        PROJECT_STATUS[project.status]?.className ?? 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {PROJECT_STATUS[project.status]?.label ?? project.status}
                     </span>
                   </div>
                   {project.description && <p className="mt-1 text-slate-500">{project.description}</p>}
-                </div>
+                </Link>
               ))}
             </section>
 
             <section className={cardClass}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <BarChart3 size={18} className="text-amber-500" />
-                  <h2 className="text-sm font-bold text-slate-900">Academic Standing</h2>
-                </div>
-                {standing.rank && (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                    <TrendingUp size={12} />
-                    {standing.rank}
-                  </span>
-                )}
+              <div className="flex items-center gap-2">
+                <BarChart3 size={18} className="text-amber-500" />
+                <h2 className="text-sm font-bold text-slate-900">Performance Overview</h2>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Stat
-                  label="Cumulative GPA"
-                  value={standing.gpa}
-                  note={standing.gpaNote}
-                  noteClass="text-emerald-600"
-                />
-                <Stat
                   label="Tasks Completed"
-                  value={standing.tasksTotal ? `${standing.tasksDone ?? 0} / ${standing.tasksTotal}` : undefined}
-                  note={standing.tasksTotal ? 'Across all sprints' : undefined}
+                  value={`${stats.done} / ${stats.total}`}
+                  note="Across all projects"
                   valueClass="text-indigo-600"
                 />
+                <Stat label="Completion Rate" value={`${stats.rate}%`} note="Done vs assigned" />
+                <Stat label="In Progress" value={stats.active} note="Active + in review" />
                 <Stat
-                  label="Sprint Velocity"
-                  value={standing.velocity}
-                  note={standing.velocityNote}
-                  noteClass="text-emerald-600"
-                />
-                <Stat
-                  label="Advisor Rating"
-                  value={standing.advisorRating ? `${standing.advisorRating} / 5` : undefined}
-                  note={standing.advisorName ? `Review by ${standing.advisorName}` : undefined}
+                  label="Overdue"
+                  value={stats.overdue}
+                  note={stats.overdue ? 'Needs attention' : 'All on time'}
+                  valueClass={stats.overdue ? 'text-red-600' : 'text-slate-900'}
+                  noteClass={stats.overdue ? 'text-red-500' : 'text-emerald-600'}
                 />
               </div>
 
               <div className="mt-4 flex items-center justify-between text-xs">
-                <span className="font-medium text-slate-600">Weekly Deliverable Activity</span>
+                <span className="font-medium text-slate-600">Weekly Completed Tasks</span>
                 <span className="font-semibold text-indigo-600">Last 8 Weeks</span>
               </div>
-              <Sparkline values={standing.weeklyActivity} />
+              <Sparkline values={stats.weekly} />
             </section>
           </div>
         </div>
