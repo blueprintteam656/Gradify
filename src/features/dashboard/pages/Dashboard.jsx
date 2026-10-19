@@ -1,7 +1,9 @@
+
 export default function Dashboard() {
   return (
-    <div>
-      <h1>Dashboard</h1>
+    <div style={{ padding: '24px' }}>
+      <h1>Gradify Dashboard</h1>
+      <p>Dashboard is working.</p>
     </div>
   );
 }

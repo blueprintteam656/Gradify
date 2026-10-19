@@ -39,7 +39,7 @@ export default function ForgotPassword() {
     try {
       const result = await forgotPassword(normalizedEmail);
       setSuccess(result.message);
-      if (import.meta.env.DEV) setDevResetPath(result.devResetPath);
+           setDevResetPath(result.devResetPath);
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {

@@ -72,17 +72,51 @@ function validatePersonal(form) {
   return errors;
 }
 
+
 function validateAcademic(form) {
   const errors = {};
-  if (!form.role) errors.role = 'Please choose how you are joining.';
-  if (!form.university) errors.university = 'University is required.';
-  if (!form.faculty) errors.faculty = 'Faculty is required.';
-  if (!form.department) errors.department = 'Department is required.';
-  const academicId = form.academicId.trim();
-  if (academicId && !DIGITS_PATTERN.test(academicId)) errors.academicId = 'Academic ID must contain digits only.';
-  if (!form.graduationYear) errors.graduationYear = 'Graduation year is required.';
+
+  if (!form.role) {
+    errors.role = 'Please choose how you are joining.';
+  }
+
+  if (!form.university) {
+    errors.university = 'University is required.';
+  }
+
+  if (!form.faculty) {
+    errors.faculty = 'Faculty is required.';
+  }
+
+  if (!form.department) {
+    errors.department = 'Department is required.';
+  }
+
+  if (form.role === 'student') {
+    const academicId = form.academicId.trim();
+
+    if (academicId && !DIGITS_PATTERN.test(academicId)) {
+      errors.academicId = 'Academic ID must contain digits only.';
+    }
+
+    if (!form.graduationYear) {
+      errors.graduationYear = 'Graduation year is required.';
+    }
+  }
+
+  if (form.role === 'supervisor') {
+    if (!form.academicTitle) {
+      errors.academicTitle = 'Academic title is required.';
+    }
+
+    if (!form.specialization.trim()) {
+      errors.specialization = 'Specialization / Research Area is required.';
+    }
+  }
+
   return errors;
 }
+
 
 function validateSecurity(form) {
   const errors = {};
@@ -118,4 +152,6 @@ export const FIELD_STEP = {
   password: 2,
   confirmPassword: 2,
   acceptTerms: 2,
+  academicTitle: 1,
+specialization: 1,
 };
