@@ -1,16 +1,22 @@
-[
-  {
-    "id": "u1",
-    "name": "Alice Johnson",
-    "username": "alice",
-    "email": "alice@gradify.io",
-    "phone": "01012345678",
-    "password": "Gradify@123",
-    "role": "TeamLeader",
-    "isVerified": true,
-    "avatar": null,
-    "createdAt": "2026-08-01T10:00:00Z"
-  },
+[{
+  "id": "u1",
+  "name": "Alice Johnson",
+  "username": "alice",
+  "email": "alice@gradify.io",
+  "phone": "01012345678",
+  "password": "Gradify@123",
+  "role": "TeamLeader",
+  "isVerified": true,
+  "avatar": null,
+  "createdAt": "2026-08-01T10:00:00Z",
+  "university": "Example University",
+  "faculty": "Faculty of Computers and Information",
+  "department": "Computer Science",
+  "studentId": "2301001",
+  "graduationYear": 2027,
+  "gpa": 3.50,
+  "academicEmail": "alice@gradify.io"
+},
   {
     "id": "u2",
     "name": "Bob Smith",

@@ -32,3 +32,8 @@ dist-ssr
 .claude/*
 .vercel
 .env*
+
+/Gradify/
+
+/.postman/
+/postman/

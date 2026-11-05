@@ -32,6 +32,8 @@ const initialForm = {
   password: '',
   confirmPassword: '',
   acceptTerms: false,
+  academicTitle: 'lecturer',
+specialization: '',
 };
 
 function formReducer(state, { name, value }) {
