@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -9,8 +8,6 @@ import {
   HelpCircle,
   KanbanSquare,
   LayoutDashboard,
-  Menu,
-  X,
   LogOut,
   Search,
   Sparkles,
@@ -36,13 +33,12 @@ const COMMUNICATION_NAV = [
 
 const formatRole = (role) => (role ?? '').replace(/([a-z])([A-Z])/g, '$1 $2');
 
-function SidebarItem({ item, active, onNavigate }) {
+function SidebarItem({ item, active }) {
   const Icon = item.icon;
 
   return (
     <Link
       to={item.to}
-      onClick={onNavigate}
       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] transition ${
         active
           ? 'bg-indigo-500 font-semibold text-white'
@@ -70,7 +66,6 @@ function initialsOf(user) {
 export default function ProfileShell({ active = 'Dashboard', children }) {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -78,18 +73,9 @@ export default function ProfileShell({ active = 'Dashboard', children }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex min-w-0 bg-[#f3f5f9] text-slate-800">
-      {mobileMenuOpen && (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-[60] bg-slate-950/50 lg:hidden"
-        />
-      )}
+    <div className="fixed inset-0 z-50 flex bg-[#f3f5f9] text-slate-800">
       {/* ============ sidebar ============ */}
-      <aside className={`fixed inset-y-0 left-0 z-[70] flex w-[min(280px,85vw)] shrink-0 flex-col overflow-y-auto bg-[#1b2559] p-4 transition-transform duration-200 lg:static lg:z-auto lg:w-[260px] lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <button type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu" className="absolute right-3 top-3 rounded-lg p-2 text-white lg:hidden"><X size={20} /></button>
+      <aside className="hidden w-[260px] shrink-0 flex-col overflow-y-auto bg-[#1b2559] p-4 lg:flex">
         <div className="mb-4 flex items-center gap-2 px-2 text-white">
           <span className="flex size-9 items-center justify-center rounded-lg bg-white/10">
             <GraduationCap size={20} />
@@ -109,14 +95,14 @@ export default function ProfileShell({ active = 'Dashboard', children }) {
         <p className="px-3 pb-2 text-[10px] font-semibold tracking-wider text-slate-400">CORE WORKSPACE</p>
         <nav className="flex flex-col gap-1">
           {WORKSPACE_NAV.map((item) => (
-            <SidebarItem key={item.label} item={item} active={item.label === active} onNavigate={() => setMobileMenuOpen(false)} />
+            <SidebarItem key={item.label} item={item} active={item.label === active} />
           ))}
         </nav>
 
         <p className="px-3 pb-2 pt-6 text-[10px] font-semibold tracking-wider text-slate-400">COMMUNICATION</p>
         <nav className="flex flex-col gap-1">
           {COMMUNICATION_NAV.map((item) => (
-            <SidebarItem key={item.label} item={item} active={item.label === active} onNavigate={() => setMobileMenuOpen(false)} />
+            <SidebarItem key={item.label} item={item} active={item.label === active} />
           ))}
         </nav>
 
@@ -148,28 +134,27 @@ export default function ProfileShell({ active = 'Dashboard', children }) {
 
       {/* ============ main ============ */}
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-3 sm:gap-4 sm:px-6">
-          <button type="button" onClick={() => setMobileMenuOpen(true)} aria-label="Open navigation" className="shrink-0 rounded-lg p-2 text-[#1b2559] hover:bg-slate-100 lg:hidden"><Menu size={22} /></button>
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-6 py-3">
           <p className="hidden text-xs text-slate-500 md:block">
             Workspace › Account › <b className="text-slate-800">My Profile</b>
           </p>
 
-          <label className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 sm:px-4 lg:max-w-md">
+          <label className="flex w-full max-w-md items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">
             <Search size={14} />
             <input
-              className="min-w-0 w-full bg-transparent outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent outline-none placeholder:text-slate-400"
               placeholder="Search projects, milestones, advisors..."
             />
-            <kbd className="hidden rounded bg-slate-200 px-1.5 text-[10px] sm:inline">⌘K</kbd>
+            <kbd className="rounded bg-slate-200 px-1.5 text-[10px]">⌘K</kbd>
           </label>
 
-          <div className="flex shrink-0 items-center gap-2 text-slate-500 sm:gap-4">
+          <div className="flex items-center gap-4 text-slate-500">
             <span className="relative">
               <Bell size={17} />
               <i className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-red-500" />
             </span>
-            <span className="hidden sm:inline"><Sun size={17} /></span>
-            <span className="hidden sm:inline"><HelpCircle size={17} /></span>
+            <Sun size={17} />
+            <HelpCircle size={17} />
           </div>
         </div>
 

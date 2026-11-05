@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -18,7 +18,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { useDashboard } from "../useDashboard";
+import { useAuth } from "../../../hooks/useAuth";
+import { getTasks } from "../../../services/mock/mockTasksService";
+import { getProjects } from "../../../services/mock/mockProjectsService";
 import ProfileShell from "../../profile/components/ProfileShell";
 
 const FILTERS = ["All Tasks", "In Progress", "In Review", "Completed"];
@@ -91,7 +93,7 @@ function StatCard({ title, value, subtitle, icon: Icon, iconStyle, progress }) {
 function Section({ title, icon: Icon, action, children }) {
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-3 py-4 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <h2 className="flex items-center gap-2 text-sm font-bold text-[#0f1d4a]">
           <Icon size={17} className="text-indigo-500" />
           {title}
@@ -104,13 +106,56 @@ function Section({ title, icon: Icon, action, children }) {
 }
 
 export default function Dashboard() {
-  const { currentUser, projects, tasks, loading, error, refresh } = useDashboard();
+  const { currentUser } = useAuth();
+
+  const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All Tasks");
+  const [refresh, setRefresh] = useState(0);
 
-  // The service returns projects already scoped to the signed-in student.
-  // The backend must enforce access control; client filtering is not security.
-  const myProjects = projects;
+  useEffect(() => {
+    let alive = true;
+
+    async function loadData() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [taskData, projectData] = await Promise.all([
+          getTasks(),
+          getProjects(),
+        ]);
+
+        if (alive) {
+          setTasks(Array.isArray(taskData) ? taskData : []);
+          setProjects(Array.isArray(projectData) ? projectData : []);
+        }
+      } catch {
+        if (alive) setError("Failed to load dashboard data.");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      alive = false;
+    };
+  }, [refresh]);
+
+  const myProjects = useMemo(
+    () =>
+      projects.filter(
+        (project) =>
+          project.ownerId === currentUser?.id ||
+          project.members?.includes(currentUser?.id)
+      ),
+    [projects, currentUser?.id]
+  );
 
   const myProjectIds = useMemo(
     () => new Set(myProjects.map((project) => project.id)),
@@ -177,7 +222,7 @@ export default function Dashboard() {
 
   return (
     <ProfileShell active="Dashboard" pageTitle="Dashboard">
-      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 py-4 sm:px-6 sm:py-5">
+      <div className="mx-auto w-full max-w-7xl px-6 py-5">
         {/* HEADER */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -185,7 +230,7 @@ export default function Dashboard() {
               Workspace › <b className="text-slate-800">Dashboard</b>
             </p>
 
-            <h1 className="mt-1 break-words text-xl font-bold text-[#0f1d4a] sm:text-2xl">
+            <h1 className="mt-1 text-2xl font-bold text-[#0f1d4a]">
               Welcome back, {firstName}! 👋
             </h1>
 
@@ -197,7 +242,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={refresh}
+              onClick={() => setRefresh((value) => value + 1)}
               aria-label="Refresh dashboard"
               className="flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
             >
@@ -267,14 +312,14 @@ export default function Dashboard() {
                 </Link>
               }
             >
-              <div className="flex flex-col items-stretch gap-3 px-3 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
-                <div className="flex w-full gap-1 overflow-x-auto pb-1 sm:w-auto">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <div className="flex flex-wrap gap-1">
                   {FILTERS.map((item) => (
                     <button
                       key={item}
                       type="button"
                       onClick={() => setFilter(item)}
-                      className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-[11px] font-semibold ${
+                      className={`rounded-lg px-3 py-2 text-[11px] font-semibold ${
                         filter === item
                           ? "bg-indigo-50 text-indigo-600"
                           : "text-slate-400 hover:bg-slate-50"
@@ -285,13 +330,13 @@ export default function Dashboard() {
                   ))}
                 </div>
 
-                <label className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 sm:w-auto">
+                <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                   <Search size={14} className="text-slate-400" />
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search tasks..."
-                    className="min-w-0 flex-1 bg-transparent text-xs outline-none sm:w-28"
+                    className="w-28 bg-transparent text-xs outline-none"
                   />
                 </label>
               </div>
@@ -370,7 +415,7 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-3 py-4 sm:px-5">
+              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4">
                 <span className="text-xs text-slate-400">
                   Showing {filteredTasks.length} tasks
                 </span>
@@ -396,7 +441,7 @@ export default function Dashboard() {
                 </Link>
               }
             >
-              <div className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:p-5">
+              <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {myProjects.map((project) => {
                   const list = projectTasks.filter(
                     (task) => task.projectId === project.id
@@ -412,14 +457,14 @@ export default function Dashboard() {
                     <Link
                       key={project.id}
                       to={`/projects/${project.id}`}
-                      className="min-w-0 rounded-xl border border-slate-200 bg-[#f8f9fc] p-4 no-underline hover:bg-indigo-50"
+                      className="rounded-xl border border-slate-200 bg-[#f8f9fc] p-4 no-underline hover:bg-indigo-50"
                     >
                       <div className="flex items-center justify-between">
                         <FolderKanban size={18} className="text-indigo-500" />
                         <ArrowUpRight size={15} className="text-slate-400" />
                       </div>
 
-                      <h3 className="mt-3 break-words text-sm font-bold text-[#0f1d4a]">
+                      <h3 className="mt-3 text-sm font-bold text-[#0f1d4a]">
                         {project.name}
                       </h3>
                       <p className="mt-1 text-xs text-slate-500">
