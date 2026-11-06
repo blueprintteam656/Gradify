@@ -1,0 +1,13 @@
+
+{
+  "theme": "light",
+  "notificationsEnabled": true,
+  "notificationPreferences": {
+    "tasks": true,
+    "feedback": true,
+    "deadlines": true,
+    "ai": false
+  },
+  "language": "en",
+  "dateFormat": "DD/MM/YYYY"
+}
