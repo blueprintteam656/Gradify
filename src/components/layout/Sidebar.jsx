@@ -1,6 +1,7 @@
+
 import { NavLink } from "react-router-dom";
-import { Activity } from "lucide-react";
 import {
+  Activity,
   GraduationCap,
   LayoutDashboard,
   UsersRound,
@@ -10,6 +11,7 @@ import {
   Bell,
   CalendarDays,
   ChartNoAxesColumnIncreasing,
+  Settings,
 } from "lucide-react";
 
 // Routes marked as new must be registered in your React Router configuration.
@@ -17,19 +19,50 @@ const workspaceItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/projects", label: "Project & Team", icon: UsersRound, badge: "Alpha" },
   { to: "/tasks", label: "Kanban Board", icon: KanbanSquare },
-  { to: "/deliverables", label: "Deliverables", icon: ListChecks, badge: "Phase 2", newRoute: true },
+  {
+    to: "/deliverables",
+    label: "Deliverables",
+    icon: ListChecks,
+    badge: "Phase 2",
+    newRoute: true,
+  },
   { to: "/ai-workspace", label: "AI Assistant", icon: Sparkles, dot: true },
 ];
 
 const communicationItems = [
-  { to: "/notifications", label: "Notifications", icon: Bell, dot: true, dotColor: "bg-rose-500", newRoute: true },
-  { to: "/meetings", label: "Meetings & Schedule", icon: CalendarDays, newRoute: true },
   {
-  to: "/dashboard/recent-activity",
-  label: "Recent Activity",
-  icon: Activity,
-},
-  { to: "/analytics", label: "Analytics & Audit", icon: ChartNoAxesColumnIncreasing, newRoute: true },
+    to: "/notifications",
+    label: "Notifications",
+    icon: Bell,
+    dot: true,
+    dotColor: "bg-rose-500",
+    newRoute: true,
+  },
+  {
+    to: "/meetings",
+    label: "Meetings & Schedule",
+    icon: CalendarDays,
+    newRoute: true,
+  },
+  {
+    to: "/dashboard/recent-activity",
+    label: "Recent Activity",
+    icon: Activity,
+  },
+  {
+    to: "/analytics",
+    label: "Analytics & Audit",
+    icon: ChartNoAxesColumnIncreasing,
+    newRoute: true,
+  },
+];
+
+const accountItems = [
+  {
+    to: "/profile/settings",
+    label: "Settings",
+    icon: Settings,
+  },
 ];
 
 function NavigationGroup({ title, items }) {
@@ -38,6 +71,7 @@ function NavigationGroup({ title, items }) {
       <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#7792C1]">
         {title}
       </p>
+
       <ul className="m-0 flex list-none flex-col gap-1 p-0">
         {items.map(({ to, label, icon: Icon, badge, dot, dotColor, end }) => (
           <li key={to}>
@@ -55,16 +89,26 @@ function NavigationGroup({ title, items }) {
                 ].join(" ")
               }
             >
-              <Icon size={17} strokeWidth={1.9} className="shrink-0" aria-hidden="true" />
+              <Icon
+                size={17}
+                strokeWidth={1.9}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+
               <span className="min-w-0 flex-1 truncate">{label}</span>
+
               {badge && (
                 <span className="shrink-0 rounded bg-[#101D47] px-2 py-1 text-[10px] font-bold text-[#D7E2FF]">
                   {badge}
                 </span>
               )}
+
               {dot && (
                 <span
-                  className={`h-[6px] w-[6px] shrink-0 rounded-full ${dotColor || "bg-[#A6A2FF]"}`}
+                  className={`h-[6px] w-[6px] shrink-0 rounded-full ${
+                    dotColor || "bg-[#A6A2FF]"
+                  }`}
                   aria-hidden="true"
                 />
               )}
@@ -83,7 +127,11 @@ export default function Sidebar() {
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#303E75]">
           <GraduationCap size={21} strokeWidth={2} aria-hidden="true" />
         </div>
-        <span className="text-[22px] font-extrabold tracking-tight">Gradify</span>
+
+        <span className="text-[22px] font-extrabold tracking-tight">
+          Gradify
+        </span>
+
         <span className="rounded bg-[#354B9A] px-1.5 py-0.5 text-[10px] font-bold text-[#DDE4FF]">
           AI
         </span>
@@ -98,8 +146,20 @@ export default function Sidebar() {
       </div>
 
       <nav aria-label="Student navigation" className="pb-4">
-        <NavigationGroup title="Core Workspace" items={workspaceItems} />
-        <NavigationGroup title="Communication" items={communicationItems} />
+        <NavigationGroup
+          title="Core Workspace"
+          items={workspaceItems}
+        />
+
+        <NavigationGroup
+          title="Communication"
+          items={communicationItems}
+        />
+
+        <NavigationGroup
+          title="Account"
+          items={accountItems}
+        />
       </nav>
     </aside>
   );
