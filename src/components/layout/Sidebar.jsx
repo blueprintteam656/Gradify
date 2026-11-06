@@ -1,5 +1,7 @@
 
 import { NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import {
   Activity,
   GraduationCap,
@@ -121,7 +123,29 @@ function NavigationGroup({ title, items }) {
 }
 
 export default function Sidebar() {
+  const { currentUser } = useAuth();
+
+const fullName =
+  currentUser?.name ||
+  [currentUser?.firstName, currentUser?.lastName]
+    .filter(Boolean)
+    .join(" ") ||
+  "My Profile";
+
+const profileImage =
+  currentUser?.profilePictureUrl ||
+  currentUser?.avatar ||
+  "";
+
+const initials = fullName
+  .trim()
+  .split(/\s+/)
+  .slice(0, 2)
+  .map((part) => part[0])
+  .join("")
+  .toUpperCase();
   return (
+    
     <aside className="flex h-full min-h-0 w-full flex-col overflow-y-auto bg-[#1B2858] px-3 pb-6 pt-5 text-white">
       <div className="flex items-center gap-2 px-2">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#303E75]">
@@ -161,6 +185,33 @@ export default function Sidebar() {
           items={accountItems}
         />
       </nav>
+      <div className="mt-auto border-t border-white/10 pt-4">
+  <Link
+    to="/profile"
+    className="flex items-center gap-3 rounded-xl bg-white/10 p-3 text-white no-underline transition hover:bg-white/15"
+  >
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-400 text-sm font-bold text-white">
+      {profileImage ? (
+        <img
+          src={profileImage}
+          alt={fullName}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-semibold">
+        {fullName}
+      </p>
+      <p className="truncate text-xs text-slate-300">
+        {currentUser?.role || "Student"}
+      </p>
+    </div>
+  </Link>
+</div>
     </aside>
   );
 }
