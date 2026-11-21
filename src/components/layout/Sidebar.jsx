@@ -14,11 +14,15 @@ import {
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   Settings,
+  Zap,
+  CalendarClock,
 } from "lucide-react";
 
 // Routes marked as new must be registered in your React Router configuration.
 const workspaceItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard/quick-actions", label: "Quick Actions", icon: Zap },
+  { to: "/dashboard/upcoming-deadlines", label: "Upcoming Deadlines", icon: CalendarClock },
   { to: "/projects", label: "Project & Team", icon: UsersRound, badge: "Alpha" },
   { to: "/tasks", label: "Kanban Board", icon: KanbanSquare },
   {
